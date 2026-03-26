@@ -5,6 +5,26 @@ from google.adk.agents.llm_agent import Agent
 from google.adk.tools.openapi_tool import OpenAPIToolset
 from google.adk.tools.openapi_tool.auth.auth_helpers import token_to_scheme_credential
 
+import hashlib
+from typing import List
+
+
+def find_exit_by_hash(possible_exits: List[str], hash_start: str) -> str:
+    """
+    Finds the correct exit name from a list of possible exits by matching 
+    the start of its SHA-256 hash.
+    """
+    if not hash_start:
+        return "I'm sorry, but you must provide a hash_start."
+    for exit_name in possible_exits:
+        sha256 = hashlib.sha256(exit_name.encode()).hexdigest()
+        if sha256.startswith(hash_start):
+            return exit_name
+    return (
+        "I'm sorry, none of the hashes of the exits you provided have a prefix "
+        "matching the hash_start you gave me"
+    )
+
 openapi_spec = requests.get("https://adventure.wietsevenema.eu/openapi.json").text
 
 
@@ -42,5 +62,5 @@ root_agent = Agent(
  "**If the player's command is ambiguous and doesn't directly map to an available tool, do not infer their intent.** "
  "Instead, suggest concrete actions based on the tools in their inventory and the objects in the room."
  ),
- tools=[adventure_game_toolset, fetch_url],
+ tools=[adventure_game_toolset, fetch_url, find_exit_by_hash],
 )
