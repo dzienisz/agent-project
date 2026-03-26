@@ -1,5 +1,6 @@
 import os
 import requests
+import httpx
 from google.adk.agents.llm_agent import Agent
 from google.adk.tools.openapi_tool import OpenAPIToolset
 from google.adk.tools.openapi_tool.auth.auth_helpers import token_to_scheme_credential
@@ -20,6 +21,13 @@ adventure_game_toolset = OpenAPIToolset(
  auth_credential=auth_credential,
 )
 
+def fetch_url(url: str) -> str:
+    """Fetches the content of a URL."""
+    with httpx.Client(follow_redirects=True) as client:
+        response = client.get(url)
+        response.raise_for_status()
+        return response.text
+
 
 root_agent = Agent(
  model="gemini-2.5-flash",
@@ -34,5 +42,5 @@ root_agent = Agent(
  "**If the player's command is ambiguous and doesn't directly map to an available tool, do not infer their intent.** "
  "Instead, suggest concrete actions based on the tools in their inventory and the objects in the room."
  ),
- tools=[adventure_game_toolset],
+ tools=[adventure_game_toolset, fetch_url],
 )
